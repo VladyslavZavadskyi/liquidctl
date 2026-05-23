@@ -1703,10 +1703,11 @@ finally:
         # Launch as a fully detached subprocess
         proc = subprocess.Popen(
             [sys.executable, "-c", script],
+            env={**os.environ, "PYTHONPATH": os.pathsep.join(p for p in sys.path if p)},
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,  # detach from parent process group
+            stdout=open("/tmp/castor3_daemon.log", "w"),
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
         )
         _LOGGER.info("sensor daemon started (pid %d)", proc.pid)
 
