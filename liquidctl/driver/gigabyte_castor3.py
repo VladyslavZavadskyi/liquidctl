@@ -1648,9 +1648,18 @@ def write_pkt(dev, payload):
 # Write PID file
 open("{_SENSOR_PID_FILE}", "w").write(str(os.getpid()))
 
+dev = None  # global, set after open
+
 def cleanup(*_):
+    global dev
+    if dev is not None:
+        try:
+            dev.close()
+        except Exception:
+            pass
+        dev = None
     try:
-        os.unlink("{_SENSOR_PID_FILE}")
+        os.unlink("/tmp/castor3_sensor_push.pid")
     except Exception:
         pass
     sys.exit(0)
@@ -1685,7 +1694,12 @@ try:
         pkt[7] = 45
         pkt[9] = (cpu_clk >> 8) & 0xFF
         pkt[10] = cpu_clk & 0xFF
-        write_pkt(dev, bytes(pkt))
+        
+        try:
+            write_pkt(dev, bytes(pkt))
+        except (OSError, IOError) as e:
+            sys.stderr.write(f"device write failed, exiting: {{e!r}}\\n")
+            cleanup()
 
         # Drain any incoming packets to prevent queue buildup
         dev.set_nonblocking(1)
@@ -1694,7 +1708,7 @@ try:
                 break
         dev.set_nonblocking(0)
 
-        time.sleep(0.8)  # ~1 push/sec accounting for cpu_usage 0.2s sample
+        time.sleep(1.6)  # ~1 push/sec accounting for cpu_usage 0.2s sample
 except Exception:
     pass
 finally:
