@@ -1698,7 +1698,8 @@ try:
         try:
             write_pkt(dev, bytes(pkt))
         except (OSError, IOError) as e:
-            sys.stderr.write(f"device write failed, exiting: {{e!r}}\\n")
+            sys.stderr.write(f"[{{time.strftime('%H:%M:%S')}}] write failed, device likely disconnected: {{e!r}}\\n")
+            sys.stderr.flush()
             cleanup()
 
         # Drain any incoming packets to prevent queue buildup
@@ -1710,7 +1711,8 @@ try:
 
         time.sleep(1.6)  # ~1 push/sec accounting for cpu_usage 0.2s sample
 except Exception:
-    pass
+    sys.stderr.write(f"[{{time.strftime('%H:%M:%S')}}] daemon loop exception: {{e!r}}\\n")
+    sys.stderr.flush()
 finally:
     cleanup()
 '''
